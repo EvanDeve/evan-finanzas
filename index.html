@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="Evan Finanzas">
 <title>Evan · Finanzas</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root {
@@ -389,7 +390,7 @@ input:focus, select:focus { border-color: var(--accent); background: rgba(255, 2
           </div>
         </div>
 
-        <div class="section-label stagger-3">Mis Bóvedas</div>
+        <div class="section-label stagger-3">Mis Cuentas</div>
         <div class="cuentas-grid stagger-3" id="cuentas-grid"></div>
 
         <div class="section-label stagger-3">Actividad Reciente</div>
@@ -415,7 +416,7 @@ input:focus, select:focus { border-color: var(--accent); background: rgba(255, 2
 
         <div class="form-group">
           <label class="form-label">Descripción</label>
-          <input type="text" id="inp-desc" placeholder="¿Qué compraste?">
+          <input type="text" id="inp-desc" placeholder="¿En qué gastaste?">
         </div>
 
         <div class="form-group">
@@ -425,7 +426,7 @@ input:focus, select:focus { border-color: var(--accent); background: rgba(255, 2
 
         <div class="form-group">
           <label class="form-label">Categoría</label>
-          <div class="chips" id="chips-cat"></div>
+          <input type="text" id="inp-cat" placeholder="Ej: Alimentación, Salario...">
         </div>
 
         <div class="form-group">
@@ -437,14 +438,7 @@ input:focus, select:focus { border-color: var(--accent); background: rgba(255, 2
       </div>
     </div>
 
-    <!-- METAS -->
-    <div class="page" id="page-metas">
-      <div class="page-header">
-        <h1 class="page-title">Objetivos</h1>
-        <p class="greeting">Tu camino al éxito</p>
-      </div>
-      <div id="metas-content"></div>
-    </div>
+
 
     <!-- HISTORIAL -->
     <div class="page" id="page-historial">
@@ -497,9 +491,7 @@ input:focus, select:focus { border-color: var(--accent); background: rgba(255, 2
     <button onclick="goTo('agregar',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
     </button>
-    <button onclick="goTo('metas',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-    </button>
+
     <button onclick="goTo('historial',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
     </button>
@@ -533,11 +525,7 @@ const CUENTAS_DEFAULT = [
   {id:'wink',     name:'Wink',          balance:0, color:'#9B7FD4', tag:'Ocio'},
 ];
 
-const METAS_DEFAULT = [
-  {id:'emerg',   name:'Fondo de Emergencia', meta:500000, color:'#5B9BD5', icon:'🛡️', cuentaId:'bn-emerg'},
-  {id:'inversion',name:'Libertad Financiera', meta:1000000, color:'#4CAF7D', icon:'📈', cuentaId:'bp'},
-  {id:'viaje',   name:'Próximo Destino',     meta:300000, color:'#9B7FD4', icon:'✈️', cuentaId:'wink'},
-];
+
 
 const CATS_GASTO   = ['Alimentación','Transporte','Vivienda','Ocio','Salud','Suscripciones','Deudas','Ahorro','Otros'];
 const CATS_INGRESO = ['Salario','Freelance','Inversión','Venta','Regalo','Otros'];
@@ -547,16 +535,13 @@ const save = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
 let cuentas = load('evan_cuentas', CUENTAS_DEFAULT);
 let movimientos = load('evan_movs', []);
-let metas = load('evan_metas', METAS_DEFAULT);
 let tipoActual = 'ingreso';
 let editingId = null;
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
-const fmt = n => '₡' + Math.round(n).toLocaleString('es-CR');
-const fmtShort = n => {
-  if (Math.abs(n) >= 1000000) return '₡' + (n / 1000000).toFixed(1) + 'M';
-  if (Math.abs(n) >= 1000) return '₡' + (n / 1000).toFixed(0) + 'K';
-  return '₡' + Math.round(n);
+const fmt = n => {
+  const fixed = Number.isInteger(n) ? n.toLocaleString('es-CR') : n.toLocaleString('es-CR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  return '₡' + fixed;
 };
 
 function showToast(msg, type = 'ok') {
@@ -580,7 +565,6 @@ function goTo(page, btn) {
   document.getElementById('content').scrollTop = 0;
   
   if (page === 'inicio') renderInicio();
-  if (page === 'metas') renderMetas();
   if (page === 'historial') renderHistorial();
 }
 
@@ -603,8 +587,8 @@ function renderInicio() {
   const ingrMes = movMes.filter(m => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0);
   const gastMes = movMes.filter(m => m.tipo === 'gasto').reduce((s, m) => s + m.monto, 0);
   
-  document.getElementById('mes-ingresos').textContent = fmtShort(ingrMes);
-  document.getElementById('mes-gastos').textContent = fmtShort(gastMes);
+  document.getElementById('mes-ingresos').textContent = fmt(ingrMes);
+  document.getElementById('mes-gastos').textContent = fmt(gastMes);
   
   const balance = ingrMes - gastMes;
   document.getElementById('balance-mes-label').textContent = (balance >= 0 ? '+' : '') + fmt(balance) + ' este mes';
@@ -614,7 +598,7 @@ function renderInicio() {
     <div class="cuenta-card" onclick="openEdit('${c.id}')">
       <div class="cuenta-dot" style="background:${c.color}"></div>
       <div class="cuenta-name">${c.name}</div>
-      <div class="cuenta-amount">${fmtShort(c.balance)}</div>
+      <div class="cuenta-amount">${fmt(c.balance)}</div>
     </div>
   `).join('');
 
@@ -627,21 +611,36 @@ function renderInicio() {
 
 function movRow(m) {
   const iconMap = {
-    'Alimentación':'🍕','Transporte':'🚗','Vivienda':'🏠','Ocio':'🎮','Salud':'💊','Suscripciones':'📺','Deudas':'💳','Salario':'💰','Freelance':'💻','Inversión':'📉'
+    'Alimentación': {fa: 'fa-solid fa-utensils',        bg: '#c0392b'},
+    'Transporte':   {fa: 'fa-solid fa-car',              bg: '#2980b9'},
+    'Vivienda':     {fa: 'fa-solid fa-house',            bg: '#8e44ad'},
+    'Ocio':         {fa: 'fa-solid fa-gamepad',          bg: '#d35400'},
+    'Salud':        {fa: 'fa-solid fa-heart-pulse',      bg: '#e74c3c'},
+    'Suscripciones':{fa: 'fa-solid fa-tv',               bg: '#16a085'},
+    'Deudas':       {fa: 'fa-solid fa-credit-card',      bg: '#7f8c8d'},
+    'Ahorro':       {fa: 'fa-solid fa-piggy-bank',       bg: '#27ae60'},
+    'Otros':        {fa: 'fa-solid fa-ellipsis',         bg: '#5D5A72'},
+    'Salario':      {fa: 'fa-solid fa-briefcase',        bg: '#C8A96E'},
+    'Freelance':    {fa: 'fa-solid fa-laptop-code',      bg: '#2471a3'},
+    'Inversión':    {fa: 'fa-solid fa-chart-line',       bg: '#1e8449'},
+    'Venta':        {fa: 'fa-solid fa-tag',              bg: '#b7950b'},
+    'Regalo':       {fa: 'fa-solid fa-gift',             bg: '#9b59b6'},
   };
-  const icon = iconMap[m.categoria] || '✨';
+  const iconData = iconMap[m.categoria] || {fa: 'fa-solid fa-circle-dot', bg: '#5D5A72'};
   const isIngreso = m.tipo === 'ingreso';
   const color = isIngreso ? 'var(--green)' : 'var(--red)';
   const dateStr = new Date(m.fecha + 'T12:00:00').toLocaleDateString('es-CR', {day:'numeric', month:'short'});
   
   return `
     <div style="display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:1px solid var(--border)">
-      <div style="width:40px; height:40px; border-radius:12px; background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:20px;">${icon}</div>
+      <div style="width:40px; height:40px; border-radius:12px; background:${iconData.bg}22; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <i class="${iconData.fa}" style="font-size:16px; color:${iconData.bg};"></i>
+      </div>
       <div style="flex:1">
         <div style="font-size:14px; font-weight:600">${m.descripcion || m.categoria}</div>
         <div style="font-size:12px; color:var(--text-dim)">${dateStr}</div>
       </div>
-      <div style="font-family:'Syne', sans-serif; font-weight:700; color:${color}">${isIngreso ? '+' : '-'}${fmtShort(m.monto)}</div>
+      <div style="font-family:'DM Sans', sans-serif; font-weight:700; color:${color}">${isIngreso ? '+' : '-'}${fmt(m.monto)}</div>
     </div>
   `;
 }
@@ -651,20 +650,8 @@ function setTipo(tipo) {
   tipoActual = tipo;
   document.getElementById('btn-ingreso').classList.toggle('active-ingreso', tipo === 'ingreso');
   document.getElementById('btn-gasto').classList.toggle('active-gasto', tipo === 'gasto');
-  renderChips();
-}
-
-function renderChips() {
-  const cats = tipoActual === 'ingreso' ? CATS_INGRESO : CATS_GASTO;
-  const container = document.getElementById('chips-cat');
-  container.innerHTML = cats.map((c, i) => `
-    <div class="chip ${i === 0 ? 'selected' : ''}" onclick="selectChip(this)">${c}</div>
-  `).join('');
-}
-
-function selectChip(el) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+  const descInput = document.getElementById('inp-desc');
+  if (descInput) descInput.placeholder = tipo === 'ingreso' ? '¿De dónde viene?' : '¿En qué gastaste?';
 }
 
 function guardarMovimiento() {
@@ -672,7 +659,7 @@ function guardarMovimiento() {
   const desc = document.getElementById('inp-desc').value.trim();
   const cuentaId = document.getElementById('inp-cuenta').value;
   const fecha = document.getElementById('inp-fecha').value;
-  const cat = document.querySelector('.chip.selected').textContent;
+  const cat = document.getElementById('inp-cat').value.trim() || 'Otros';
 
   if (!monto || monto <= 0 || !fecha) {
     showToast('Datos incompletos', 'error');
@@ -696,39 +683,10 @@ function guardarMovimiento() {
   // Clear inputs
   document.getElementById('inp-monto').value = '';
   document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-cat').value = '';
 }
 
-// ── METAS & HISTORIAL ─────────────────────────────────────────────────────────
-function renderMetas() {
-  const cont = document.getElementById('metas-content');
-  cont.innerHTML = metas.map(m => {
-    const cuenta = cuentas.find(c => c.id === m.cuentaId);
-    const balance = cuenta ? cuenta.balance : 0;
-    const progress = Math.min(100, Math.round((balance / m.meta) * 100));
-    
-    return `
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; margin-bottom:12px">
-          <div style="display:flex; gap:12px">
-            <span style="font-size:24px">${m.icon}</span>
-            <div>
-              <div style="font-weight:700">${m.name}</div>
-              <div style="font-size:12px; color:var(--text-dim)">Meta: ${fmt(m.meta)}</div>
-            </div>
-          </div>
-          <div style="font-family:'Syne', sans-serif; font-size:20px; font-weight:800; color:${m.color}">${progress}%</div>
-        </div>
-        <div style="height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden">
-          <div style="width:${progress}%; height:100%; background:${m.color}; transition: width 1s ease-out"></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:12px">
-          <span>Actual: ${fmt(balance)}</span>
-          <span style="color:var(--text-dim)">Faltan: ${fmt(Math.max(0, m.meta - balance))}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
+// ── HISTORIAL ─────────────────────────────────────────────────────────────────
 
 function renderHistorial() {
   const filterCuenta = document.getElementById('filtro-cuenta').value;
@@ -800,11 +758,10 @@ function saveEdit() {
 function saveAll() {
   save('evan_cuentas', cuentas);
   save('evan_movs', movimientos);
-  save('evan_metas', metas);
 }
 
 function exportData() {
-  const data = { cuentas, movimientos, metas };
+  const data = { cuentas, movimientos };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -828,7 +785,6 @@ function importData(e) {
       if (data.cuentas && data.movimientos) {
         cuentas = data.cuentas;
         movimientos = data.movimientos;
-        metas = data.metas || metas;
         saveAll();
         location.reload();
       } else {
@@ -858,7 +814,6 @@ function init() {
   filterCuenta.innerHTML += options;
   
   document.getElementById('inp-fecha').valueAsDate = new Date();
-  renderChips();
   renderInicio();
 }
 
